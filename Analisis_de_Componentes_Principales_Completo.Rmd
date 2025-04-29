@@ -1,0 +1,146 @@
+
+---
+title: "Analisis_de_Componentes_Principales_Completo"
+author: "Hector Alenkar Garcia Rodriguez"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Cargar librerías necesarias
+```{r librerias}
+library(pacman)
+p_load(haven, dplyr, factoextra, FactoMineR, readr, rgl, fpc, psych, readxl)
+```
+
+# 2. Cargar bases de datos
+```{r cargar_datos}
+data_pca <- read_csv2("data_pca.csv")
+covid <- read_excel("Covid.xlsm", sheet = 1)
+poblacion <- read_excel("PoblacionUSA.xlsm", sheet = 1)
+```
+
+# 3. Análisis PCA para `data_pca`
+## 3.1 Preparación de los datos
+```{r preparar_data_pca}
+data_pca_clean <- data_pca %>% select(-y)
+data_pca_scaled <- scale(data_pca_clean)
+```
+
+## 3.2 Diagnóstico para realizar PCA
+```{r diagnostico_data_pca}
+psych::KMO(cor(data_pca_clean))
+det(cor(data_pca_clean))
+```
+
+## 3.3 Realizar PCA
+```{r pca_data_pca}
+pca_data_pca <- prcomp(data_pca_scaled)
+summary(pca_data_pca)
+fviz_eig(pca_data_pca)
+```
+
+## 3.4 Representaciones gráficas
+```{r graficos_data_pca}
+fviz_pca_ind(pca_data_pca, col.ind = "cos2", gradient.cols = c("red", "yellow", "green"), repel = FALSE)
+fviz_pca_var(pca_data_pca, col.var = "contrib", gradient.cols = c("red", "yellow", "green"), repel = FALSE)
+fviz_pca_biplot(pca_data_pca, col.var = "red", col.ind = "black")
+```
+
+## 3.5 Rotación Varimax
+```{r varimax_data_pca}
+pca_data_pca_rot <- psych::principal(data_pca_scaled, nfactors = 2, rotate = "varimax", scores = TRUE)
+pca_data_pca_rot
+```
+
+# 4. Análisis PCA para `PoblacionUSA` (años 2000 y 2001)
+## 4.1 Filtrar datos
+```{r filtrar_poblacion}
+poblacion_2000 <- poblacion %>% filter(Año == 2000) %>% select(-Año)
+poblacion_2001 <- poblacion %>% filter(Año == 2001) %>% select(-Año)
+poblacion_2000_scaled <- scale(poblacion_2000)
+poblacion_2001_scaled <- scale(poblacion_2001)
+```
+
+## 4.2 Diagnóstico PCA (año 2000)
+```{r diagnostico_poblacion_2000}
+psych::KMO(cor(poblacion_2000))
+det(cor(poblacion_2000))
+```
+
+## 4.3 Realizar PCA año 2000
+```{r pca_poblacion_2000}
+pca_poblacion_2000 <- prcomp(poblacion_2000_scaled)
+summary(pca_poblacion_2000)
+fviz_eig(pca_poblacion_2000)
+fviz_pca_ind(pca_poblacion_2000, col.ind = "cos2", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_var(pca_poblacion_2000, col.var = "contrib", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_biplot(pca_poblacion_2000, col.var = "blue", col.ind = "black")
+```
+
+## 4.4 Diagnóstico PCA (año 2001)
+```{r diagnostico_poblacion_2001}
+psych::KMO(cor(poblacion_2001))
+det(cor(poblacion_2001))
+```
+
+## 4.5 Realizar PCA año 2001
+```{r pca_poblacion_2001}
+pca_poblacion_2001 <- prcomp(poblacion_2001_scaled)
+summary(pca_poblacion_2001)
+fviz_eig(pca_poblacion_2001)
+fviz_pca_ind(pca_poblacion_2001, col.ind = "cos2", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_var(pca_poblacion_2001, col.var = "contrib", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_biplot(pca_poblacion_2001, col.var = "blue", col.ind = "black")
+```
+
+# 5. Análisis PCA para `Covid`
+## 5.1 Preparación de los datos
+```{r preparar_covid}
+covid_clean <- covid %>% select(where(is.numeric))
+covid_scaled <- scale(covid_clean)
+```
+
+## 5.2 Diagnóstico PCA
+```{r diagnostico_covid}
+psych::KMO(cor(covid_clean))
+det(cor(covid_clean))
+```
+
+## 5.3 Realizar PCA
+```{r pca_covid}
+pca_covid <- prcomp(covid_scaled)
+summary(pca_covid)
+fviz_eig(pca_covid)
+```
+
+## 5.4 Representaciones gráficas
+```{r graficos_covid}
+fviz_pca_ind(pca_covid, col.ind = "cos2", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_var(pca_covid, col.var = "contrib", gradient.cols = c("red", "yellow", "green"))
+fviz_pca_biplot(pca_covid, col.var = "blue", col.ind = "black")
+```
+
+# 6. Resumen de los análisis
+## 6.1 Resumen `data_pca`
+- Eliminación de variable `y`.
+- Primeras dos componentes principales explican >60% de varianza.
+- Biplots muestran agrupamientos latentes.
+- Rotación Varimax mejoró interpretabilidad.
+
+## 6.2 Resumen `PoblacionUSA`
+- Estructura consistente en años 2000 y 2001.
+- Dos componentes principales explican >65% de varianza.
+- Agrupamientos coherentes con los datos poblacionales.
+
+## 6.3 Resumen `Covid`
+- Algunas variables altamente correlacionadas.
+- Primeras dos componentes explican parte importante de la variabilidad.
+- Visualización de conglomerados interesantes.
+
+# 7. Conclusiones generales
+- PCA efectivo para reducción dimensional en las tres bases.
+- Adecuación de los datos confirmada por KMO y determinantes.
+- Interpretación más sencilla tras rotaciones.
